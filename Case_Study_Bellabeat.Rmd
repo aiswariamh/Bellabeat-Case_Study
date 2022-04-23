@@ -1,0 +1,600 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+
+```{undefined eval=FALSE, include=FALSE}
+
+```
+
+---
+title: "R Notebook - Bellabeat Case Study"
+output: 
+  pdf_document: 
+    toc: yes
+    fig_caption: yes
+    number_sections: yes
+    keep_tex: yes
+date: "20/4/2022"
+---
+
+#### 1.0 BUSINESS TASK
+
+Bellabeat is a health and wellness company for women offering a creative blend of design with technology wearables and services. The brand is looking to improvise their marketing strategy by analyzing the trends observed in the smart device usage. The findings from the analysis would be shared with the Bellabeat's Executive team. The Marketing Analytics team would also provide recomendations that incorporate the data driven insights to be applied into one of Bellabeat's key products - the smart watch category. These recommendations would help expand Bellabeat's customer reach and also stay in line with the latest trends for an enriched customer experience.
+
+#### 2.0 PREPARE PHASE
+
+Urška Sršen is Bellabeat's cofounder and Chief Creative Officer and also a key stakeholder of the Executive Team. The dataset suggested by Srsen for the analysis points out to personal tracker data from 30 eligible Fitbit users recorded between 03.12.2016-05.12.2016. Though the dataset has recorded various parameters required for the analysis, it has some limitations in that the data is relatively old and could be obsolete compared to the present time and might not provide accurate results. Hence additional data sources need to be considered to supplement the available data.
+
+#### 2.1 DATA SOURCES :-
+
+1\. Fitbit Fitness Tracker Data (CC0: Public Domain) Cited reference: Furberg, R., Brinton, J., Keating, M., & Ortiz, A. (2016). Crowd-sourced Fitbit datasets 03.12.2016-05.12.2016 [Data set]. Zenodo. <https://doi.org/10.5281/zenodo.53894>
+
+Publication date: May 31, 2016 Last updated 2020-12-16
+
+2\. An Open Dataset for Human Activity Analysis.
+
+Cited Reference: Sébastien Faye, Nicolas Louveton, Sasan Jafarnejad, Roman Kryvchenko, Thomas Engel. An Open Dataset for Human Activity Analysis using Smart Devices. 2017. ffhal-01586802f
+
+Last updated 2017-09-01
+
+3\. WISDM Smartphone and Smartwatch Activity and Biometrics .
+
+(Cited references: IEEE Access, 7:133190-133202, Sept. 2019.)
+
+Last updated 2019-11-18
+
+(Source :[https://ieeexplore.ieee.org/abstract/document/8835065)](https://ieeexplore.ieee.org/abstract/document/8835065))
+
+All the datasets are downloaded and stored in a folder in the local machine. The datasets are made available to the public domain and are cited sources thereby making the data credible. Some sorting and filtering techniques need to be applied to clean and transform data before analysis. The absence of proper metrics for some of the parameters recorded in the dataset is defenitely challenging.
+
+Since all the 3 datasets carry valuable information about wearable devices and associated activity, it could help gain insight on the nature of daily activities carried out and smart device usage habits of people in general. These findings could then be analyzed to look for trends and shared with Bellabeat's Executive Team.
+
+#### 3.0 PROCESS PHASE
+
+### 
+
+For the FitBit dataset, it can be found that there are 33 unique IDs against the previously thought 30 IDs. Hence, the data is assumed to have been updated at the time of download. Data for all the 33 unique IDs cannot be found for each of the factors like sleep cycle, heart rate and weight. This could be attributed to the non-availability of data from some of the users. Hence analysis is performed on the available data only.
+
+The HAL dataset for smartwatch is filtered to show only observations for heart rate, step counter and pressure reading for several activities as part of our analysis. The *NAs* observed for heart rate readings are assumed to be null data and treated accordingly.
+
+The WISDM dataset for smartwatch comprises of both gyrometer and accelerometer readings for 18 activities. Since each subject performs each of these activities for exactly 3 minutes, analysis is carried out on only one randomly chosen subject.
+
+Since data is presented in csv files, MS Excel is used to filter out data useful for the analysis and check for the presence of null values/blanks. The R tool is used to perform all other cleaning and transformation techniques, data analysis and data visualizations. The R Markdown file helps document all cleaning and manipulation techniques used for the analysis and hence serves as the ideal platform for the analysis.
+
+#### 4.0 ANALYZE & SHARE PHASES
+
+```{r Install Packages, echo=TRUE, message=FALSE, warning=FALSE}
+install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+```{r Read Fitbit Data, echo=TRUE, message=FALSE, warning=FALSE}
+## Data Source 1 : Fitbit Fitness Tracker Dataset.
+
+fitbit_activity <- read_csv("C:/Users/my pc/Desktop/GA/Google Data Analytics Capstone Complete a Case Study/FitBit-Data/Fitabase Data 4.12.16-5.12.16/dailyActivity_merged.csv")
+
+
+activity_info <- fitbit_activity %>%
+  select(Id,ActivityDate,TotalSteps,FairlyActiveMinutes,LightlyActiveMinutes,VeryActiveMinutes,SedentaryMinutes,Calories)
+summary(activity_info)
+
+# Print number of Unique Ids.
+no_ids <- unique(activity_info$Id)
+print(length(no_ids))
+
+```
+
+The dataset has 33 unique Ids against the previously thought 30 Ids suggesting that the dataset may have been updated.
+
+```{r activity_info, echo=TRUE, message=FALSE, warning=FALSE}
+# Graphical Representation of the relationship between Step Count and Calories burnt.
+
+ggplot(activity_info) + 
+  geom_jitter(mapping= aes(x = TotalSteps, y = Calories )) +
+  ggtitle("Total Steps Vs Calories Burnt")
+
+```
+
+The graph above depicts the relationship between step count and calories. It can be noted that as the step count increases, the calories burnt is also found to rise.
+
+```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, warning=FALSE}
+activity_min <- activity_info %>%
+  select(FairlyActiveMinutes,LightlyActiveMinutes,VeryActiveMinutes,SedentaryMinutes)
+
+
+# Boxplot representation of active minutes.
+
+boxplot(activity_min,                         # Data
+        #col = rainbow(ncol(activity_min)),   # Color
+        col = rgb(0.5, 0.5, 1, alpha = 0.5),
+        lwd = 1.0,                            # Line width
+        ylab = "Minutes",                     # Y axis label
+        main = "Activity Recorded by FitBit Users between 03.12.2016-05.12.2016",  # Main Title of chart
+        outpch = 23,                          # Outlier symbol
+        outbg = "blue",                       # Outlier color
+        whiskcol = "orange",                  # Whisker color
+        whisklty = 5,                         # Whisker line type
+        lty = 1)                              # Line type
+```
+
+```{r eval=FALSE, include=FALSE, out.width="50%"}
+
+knitr::include_graphics("C:/Users/my pc/Desktop/GA/Google Data Analytics Capstone Complete a Case Study/Bellabeat_CaseStudy/Rplot-FitBitActivity.png")
+
+```
+
+From the graphical Representation : *"Activity Recorded by FitBit Users between 3.12.2016 - 5.12.2016"* ,the following can be understood :-
+
+1.  The FitBit users were seen to have involved in more of sendentary activities followed by light activities in their lifestyle.
+2.  The Active minutes recorded were comparatively very low.
+
+```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, warning=FALSE}
+# Graphical Representation of the relationship between Minutes active and Calories burnt.
+
+FairlyActiveMinutes <- activity_info$FairlyActiveMinutes
+LightlyActiveMinutes <- activity_info$LightlyActiveMinutes
+VeryActiveMinutes <- activity_info$VeryActiveMinutes
+SedentaryMinutes <- activity_info$SedentaryMinutes
+Calories <- activity_info$Calories
+
+par(mfrow = c(2,2))
+plot(FairlyActiveMinutes, Calories, main ="Fairly Active Minutes vs. Calories")
+plot(LightlyActiveMinutes, Calories, main ="Lightly Active Minutes vs. Calories")
+plot(VeryActiveMinutes, Calories, main ="Very Active Minutes vs. Calories")
+plot(SedentaryMinutes, Calories, main ="Sedentary Minutes vs. Calories")
+
+
+```
+
+From the representations, it could be seen that :-
+
+(1) Calories are shed faster when nature of the activities performed are Very Active or Fairly Active.
+
+(2) Lightly active tasks when performed over a course of time help shed more calories.
+
+(3) Sedentary Activities do not help shed calories fast enough.
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+# Reading and Analyzing Sleep data.
+
+sleep_data <- read_csv("C:/Users/my pc/Desktop/GA/Google Data Analytics Capstone Complete a Case Study/FitBit-Data/Fitabase Data 4.12.16-5.12.16/sleepDay_merged.csv")
+
+sleep_time <- sleep_data %>%
+  select(Id,SleepDay,TotalMinutesAsleep)
+sleep_time$sleepTime_Hours <- sleep_time$TotalMinutesAsleep / 60
+summary(sleep_time)
+
+class(sleep_time$SleepDay)
+
+# Convert Character to Date format.
+
+sleep_time$SleepDay_new <- as.Date(sleep_time$SleepDay, "%m/%d/%Y")
+class(sleep_time$SleepDay_new)
+
+sleep_average <- aggregate(sleep_time$sleepTime_Hours, by=list(sleep_time$Id, sleep_time$SleepDay_new), sum)
+colnames(sleep_average) <- c('Id' ,'SleepDay', 'TotalSleepTime_Hours')
+
+# Print number of Sleep Ids.
+
+no_sleep_ids <- unique(sleep_time$Id)
+print(length(no_sleep_ids))
+
+# Sleep Data of 24 users are present.
+
+str(sleep_average)
+
+# Group Sleep Patterns. Recommended sleep time for adults as mentioned by CDC is 7 or more hours per night.
+
+q1 <- sleep_average %>%
+  filter (TotalSleepTime_Hours >= 7.0) %>%
+    mutate(class = 'Good Sleep') 
+q2 <- sleep_average %>%
+  filter (TotalSleepTime_Hours < 7.0 & TotalSleepTime_Hours >= 6.0) %>%
+    mutate(class = 'Moderate Sleep')
+q3 <- sleep_average %>%
+  filter (TotalSleepTime_Hours < 6.0) %>%
+  mutate(class = 'Less Sleep') 
+     
+
+res <- rbind(q1,q2,q3)
+
+# Graphical Representation of Sleep Pattern.
+
+ggplot(res) + 
+  geom_jitter(mapping= aes(x = SleepDay, y = TotalSleepTime_Hours, colour = class )) +
+  ggtitle("Sleep Pattern Recorded from 24 FitBit Users")
+```
+
+From the graphical representation : *" Sleep Pattern Recorded from 24 FitBit Users"*, the following can be understood :-
+
+1.  Most of the observations recorded showed a sleep pattern ranging between 5 to 10 hours.
+2.  Even though most of the time observations were found to fall in the Good to Moderate Sleep Range, a significant number of observations point to a less sleep pattern amongst the FitBit Users.
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+# Reading and Analyzing heart data.
+heart_data <- read_csv("C:/Users/my pc/Desktop/GA/Google Data Analytics Capstone Complete a Case Study/FitBit-Data/Fitabase Data 4.12.16-5.12.16/heartrate_seconds_merged.csv")
+summary(heart_data)
+
+
+# Print number of Heart rate Ids.
+
+no_heartRate_ids <- unique(heart_data$Id)
+print(no_heartRate_ids)
+
+## Heart Rate recorded for 7 fitbit Users.
+
+list_of_Ids <- heart_data %>%
+  group_by(Id) %>%
+  summarise_at(vars(Value), list(Mean_Heart_Rate = mean))
+
+
+## A normal resting heart rate for adults ranges from 60 to 100 beats per minute.
+
+
+normal_heart_rate <- list_of_Ids %>%
+  filter(Mean_Heart_Rate >= 60 & Mean_Heart_Rate <= 100) %>%
+  mutate(Heart_health = 'Normal Range')
+
+unusual_heart_rate <- list_of_Ids %>%
+  filter(Mean_Heart_Rate < 60 | Mean_Heart_Rate > 100) %>%
+  mutate(Heart_health = 'Unusual Range')
+
+# It can be understood from the list that all of the 7 FitBit Users had their average heart rate all within the Normal Range.
+
+
+# Reading and Analyzing weight data.
+
+weight_data <- read_csv("C:/Users/my pc/Desktop/GA/Google Data Analytics Capstone Complete a Case Study/FitBit-Data/Fitabase Data 4.12.16-5.12.16/weightLogInfo_merged.csv")
+weight_log <- weight_data %>%
+  select(Id,Date,WeightKg,BMI)
+summary(weight_log)
+
+bmi_Ids <- weight_log %>%
+  group_by(Id) %>%
+  summarise_at(vars(BMI), list(Mean_BMI_Value = mean))
+
+
+# If your BMI is 18.5 to 24.9, it falls within the normal or Healthy Weight range. If your BMI is 25.0 to 29.9, it falls within the overweight range. If your BMI is 30.0 or higher, it falls within the obese range.
+
+w1 <- bmi_Ids %>%
+  filter (Mean_BMI_Value >= 18.5 & Mean_BMI_Value <= 24.9) %>%
+  mutate(weight_class = 'Normal') 
+
+w2 <- bmi_Ids %>%
+  filter (Mean_BMI_Value >= 25.0 & Mean_BMI_Value <= 29.9) %>%
+  mutate(weight_class = 'Overweight') 
+
+w3 <- bmi_Ids %>%
+  filter (Mean_BMI_Value >= 30.0) %>%
+  mutate(weight_class = 'Obese') 
+
+wt <- rbind(w1, w2, w3)
+
+# Print number of Weight Log Ids.
+
+no_weightLog_ids <- unique(weight_log$Id)
+print(length(no_weightLog_ids))
+
+# Weight Logged by 8 Users.
+
+# Calculate percentage for each category of bmi index.
+
+bmi <- wt %>% 
+  group_by(weight_class) %>% 
+  count() %>% 
+  ungroup() %>% 
+  mutate(percentage = `n` / sum(`n`)) %>% 
+  arrange(percentage) %>%
+  mutate(labels = scales::percent(percentage))
+
+# Pie Chart Representation of Body Mass Index of FitBit Users.
+
+ggplot(bmi, aes(x = "", y = percentage, fill = weight_class)) +
+  geom_col() +  geom_text(aes(label = labels), position = position_stack(vjust = 0.5)) + 
+  coord_polar(theta = "y") + ggtitle("BMI Range from Observed Data") 
+```
+
+From the graphical representation : *" BMI Range from Observed Data"*, the following can be analyzed :-
+
+1.  Only 38 % represents a Normal BMI range while the majority rest refers to an unhealthy weight range.
+
+```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, warning=FALSE}
+## DATA SOURCE 2:- An Open Dataset for Human Activity Analysis using Smart Devices.
+
+df <- read_csv("C:/Users/my pc/Desktop/GA/Google Data Analytics Capstone Complete a Case Study/Human-Activity analysis/report.csv")
+
+data_source2 <- df %>%
+  select(index,activity_type,duration)
+
+# Determine the number of unique activities.
+
+unique_activities <- unique(data_source2$activity_type)
+print(unique_activities)
+summary(data_source2)
+
+activity_duration <- data_source2 %>%
+  group_by(activity_type) %>%
+  summarise(Total_duration = sum(duration)) 
+
+# Sort Activities based on their maximum duration.
+
+order_of_activity <- arrange(activity_duration, desc(Total_duration))
+
+order_of_activity$Total_duration <- as.numeric(order_of_activity$Total_duration)
+
+# Duration of Activities in Hours.
+
+g1 <- order_of_activity %>%
+    mutate(total_duration_in_hours = Total_duration / 3600 )
+
+# Plot Activities and their duration.
+
+ggplot(g1) +  geom_col(aes(x = activity_type, y = total_duration_in_hours), color = "red" ) + theme(axis.text.x=element_text(angle=60,hjust=1)) +
+  ggtitle("Most Common Activity Types As Observed from 29th June 2017 to 12th July 2017") + 
+  xlab("Activity Type") + ylab("Total Duration in Hours") 
+```
+
+From the graphical representation : *" Most Common Activity Types As Observed From 29th June 2017 to 12th July 2017"*, the following can be analyzed :-
+
+1.  Activities like *'At Home', ' In Computer', 'Walking&party'* and '*Walk*' takes the highest precedence. This supports the analysis from FitBit User data (from a year earlier) that sedentary activities and light activities form most part of the current lifestyle.
+2.  Moderate to Intense Activities like 'Football' and 'Running' had minimal presence.
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+## Reading smartwatch_filtered.csv.
+
+smart <- read_csv("C:/Users/my pc/Desktop/GA/Google Data Analytics Capstone Complete a Case Study/Human-Activity analysis/smartwatch_filtered.csv")
+
+summary(smart)
+
+heart <- smart[smart$source == 'heart_rate', ]
+
+str(heart)
+
+heart$beatsPerMinute <- substring(heart$values, 3, 6)
+heart$beatsPerMinute <- as.numeric(heart$beatsPerMinute)
+str(heart)
+
+
+## A normal resting heart rate for adults ranges from 60 to 100 beats per minute.
+
+
+normal_heart_rate_numbers <- heart %>%
+  filter(beatsPerMinute >= 60 & beatsPerMinute <= 100) %>%
+  mutate(Heart_health = 'Normal Range')
+
+unusual_heart_rate_numbers <- heart %>%
+  filter((beatsPerMinute < 60 & is.na(beatsPerMinute)!= TRUE) | (beatsPerMinute > 100 & is.na(beatsPerMinute)!= TRUE)) %>%
+  mutate(Heart_health = 'Unusual Range')
+
+other <- heart %>%
+  filter(is.na(beatsPerMinute)== TRUE) %>%
+  mutate(beatsPerMinute = 0) %>%
+  mutate(Heart_health = 'Data Not Available')
+
+hrt <- rbind(normal_heart_rate_numbers, unusual_heart_rate_numbers, other)
+
+summary(heart$beatsPerMinute)
+
+```
+
+It can be noted from the summary statistics that the mean reading for heart rate was 69 which is within the normal range.
+
+A total of 9 observations measured for heart rate showed 0.0 as their reading indicating that the smartwatch may have been idle or being charged.
+
+```{r}
+# Calculate percentage of each category of Heart Health.
+
+df <- hrt %>% 
+  group_by(Heart_health) %>% 
+  count() %>% 
+  ungroup() %>% 
+  mutate(perc = `n` / sum(`n`)) %>% 
+  arrange(perc) %>%
+  mutate(labels = scales::percent(perc))
+
+# Pie Chart Representation of Heart Health.
+
+ggplot(df, aes(x = "", y = perc, fill = Heart_health)) +
+  geom_col() +  geom_text(aes(label = labels), position = position_stack(vjust = 0.5)) + 
+  coord_polar(theta = "y") + ggtitle("Average Heart Rate from Observed Data") 
+
+
+# Filter out Step Counters.
+
+step_count <- smart[smart$source == 'step_counter', ]
+summary(step_count)
+step_count$count_of_steps <- substring(step_count$values, 3, 5)
+step_count$count_of_steps <- as.numeric(step_count$count_of_steps)
+str(step_count)
+summary(step_count)
+
+# Mean step count is too low indicative of mild activities.
+
+st_ct <- step_count %>%
+  group_by(timestamp) %>%
+  summarise( Total_Steps = sum(count_of_steps)) 
+
+str(st_ct$timestamp)
+
+# Extract Hour Readings from the data.
+
+st_ct$ts <- substring(st_ct$timestamp, 0, 2)
+
+s1 <- st_ct %>%
+  filter(ts >= 00 & ts <= 11) %>%
+  mutate(Time = 'Time 1')
+
+s2 <- st_ct %>%
+  filter(ts >= 12 & ts <= 23) %>%
+  mutate(Time = 'Time 2')
+
+s3 <- st_ct %>%
+  filter(ts >= 24 & ts <= 35) %>%
+  mutate(Time = 'Time 3')
+
+s4 <- st_ct %>%
+  filter(ts >= 36 & ts <= 47) %>%
+  mutate(Time = 'Time 4')
+
+s5 <- st_ct %>%
+  filter(ts >= 48 & ts <= 60) %>%
+  mutate(Time = 'Time 5')
+
+d1 <- data.frame(TimeStamp = c("Time 1", "Time 2", "Time 3", "Time 4", "Time 5"), 
+                 labels = c("00:00:00 to 11:59:59", "12:00:00 to 23:59:59", "24:00:00 to 35:59:59", "36:00:00 to 47:59:59", "48:00:00 to 60:00:00"),
+           TotalStepCount = c(sum(s1$Total_Steps), sum(s2$Total_Steps), sum(s3$Total_Steps), sum(s4$Total_Steps), sum(s5$Total_Steps)),
+           AvgStepCount = c(mean(s1$Total_Steps), mean(s2$Total_Steps), mean(s3$Total_Steps), mean(s4$Total_Steps), mean(s5$Total_Steps)))
+
+
+# DotChart representation of Average Step Count.
+
+dotchart(d1$AvgStepCount, 
+         labels = c("00:00:00 to 11:59:59", "12:00:00 to 23:59:59", "24:00:00 to 35:59:59", "36:00:00 to 47:59:59", "48:00:00 to 60:00:00"),
+         cex = 0.9,  
+         pch = 22,
+         color = "blue",
+         xlab = "Step Count",
+         main = "Average Step Count Measured Over 15 days")
+```
+
+From the graphical representation : *" Average Heart Rate from Observed Data"* and the dotchart representation : *" Average Step Count Measured Over 15 Days"*, the following can be analyzed :-
+
+1.  Since the activities engaged in were mostly sedentary or mild natured, the average heart rate was found to be well within the Normal Range for 80% of the time.
+2.  This is supported by the average step count readings at each of the time intervals observed over a period of 15 days.
+
+```{r echo=TRUE, fig.height=6, fig.width=10, message=FALSE, warning=FALSE}
+## DATA SOURCE 3 :  Smartphone and Smartwatch Activity and Biometrics dataset.
+
+### Since 51 subjects perform 18 predetermined activities for 3 minutes, we will be considering only one subject/id for our analysis. ID no. 1605 is randomly chosen.
+
+# Reading Gyro Sensor data for Subject : 1605.
+
+wisdm_1605 <- read_csv("C:/Users/my pc/Desktop/GA/Google Data Analytics Capstone Complete a Case Study/WISDM Dataset/wisdm-dataset/wisdm-dataset/raw/watch/gyro/data_1605_gyro_watch.txt")
+                 
+names(wisdm_1605) <- c('participant_id' , 'activity_code' , 'timestamp', 'x', 'y', 'z')
+summary(wisdm_1605)   
+
+# Clean the 'z' column.
+
+wisdm_1605$z<- gsub(";"," ", wisdm_1605$z)
+wisdm_1605$z <- as.numeric(wisdm_1605$z)
+
+summary(wisdm_1605) 
+
+# Grouping of Activities adopted from the research paper.
+
+w1 <- wisdm_1605 %>%
+  filter (activity_code == "A" | activity_code == "B" | activity_code == "C" | activity_code == "E" | activity_code == "M" | activity_code == "D") %>%
+  mutate(Group = 'Non-Hand Oriented Activities') 
+
+w2 <- wisdm_1605 %>%
+  filter (activity_code == "P" | activity_code == "O" | activity_code == "F" | activity_code == "Q" | activity_code == "R" | activity_code == "G" | activity_code == "S") %>%
+  mutate(Group = 'Hand Oriented Activities - General') 
+
+w3 <- wisdm_1605 %>%
+  filter (activity_code == "J" | activity_code == "H" | activity_code == "L" | activity_code == "I" | activity_code == "K") %>%
+  mutate(Group = 'Hand Oriented Activities - Eating') 
+
+avty_1605 <- rbind(w1, w2, w3)
+
+res_1605 <- avty_1605 %>%
+             select(Group,x,y,z) %>%
+            group_by(Group) %>%
+            summarise(X = mean(x, na.rm=T), Y = mean(y, na.rm=T), Z = mean(z, na.rm=T)) 
+
+# Install scatterplot3d package for 3D Scatter Plot Representation.
+
+install.packages("scatterplot3d", repos = "http://cran.us.r-project.org")   
+library(scatterplot3d)
+
+colors <- c("#E26F00", "#10B4E2", "#499388")
+
+Y <- res_1605[1:3, 1:4]
+plot1 <- scatterplot3d(Y[1:3, 2:4],  pch = 16, color = colors, box = FALSE, grid = FALSE, type = "h",
+                       main="Average Gyro Sensor data for 18 activities obtained in September 2019",
+                       xlab = " Sensor Data X ", ylab = " Sensor Data Y", zlab = " Sensor Data Z")
+
+# Install Package FactoClass.
+
+install.packages("FactoClass",  repos = "http://cran.us.r-project.org")
+library(FactoClass)
+
+plot1$points3d(Y[1:3, 2:4],pch = 2)
+addgrids3d(Y[1:3, 2:4], grid = c("xy", "xz", "yz"))
+
+# xyz.convert function which converts coordinates from 3D (x, y, z) to 2D-projection (x, y) of scatterplot3d. Useful to plot objects into existing plot.
+
+txt<- plot1$xyz.convert(Y[1:3, 2:4])
+text(txt,labels = Y$Group,cex = 0.8,col = "blue",pos = 3)
+
+
+# Reading Accel Sensor Data for Subject : 1605.
+
+accel_1605 <- read_csv("C:/Users/my pc/Desktop/GA/Google Data Analytics Capstone Complete a Case Study/WISDM Dataset/wisdm-dataset/wisdm-dataset/raw/watch/accel/data_1605_accel_watch.txt")
+
+names(accel_1605) <- c('participant_id' , 'activity_code' , 'timestamp', 'x', 'y', 'z')
+summary(accel_1605)    
+
+accel_1605$z<- gsub(";"," ", accel_1605$z)
+accel_1605$z <- as.numeric(accel_1605$z)
+
+summary(accel_1605) 
+
+a1 <- accel_1605 %>%
+  filter (activity_code == "A" | activity_code == "B" | activity_code == "C" | activity_code == "E" | activity_code == "M" | activity_code == "D") %>%
+  mutate(Group = 'Non-Hand Oriented Activities') 
+
+a2 <- accel_1605 %>%
+  filter (activity_code == "P" | activity_code == "O" | activity_code == "F" | activity_code == "Q" | activity_code == "R" | activity_code == "G" | activity_code == "S") %>%
+  mutate(Group = 'Hand Oriented Activities - General') 
+
+a3 <- accel_1605 %>%
+  filter (activity_code == "J" | activity_code == "H" | activity_code == "L" | activity_code == "I" | activity_code == "K") %>%
+  mutate(Group = 'Hand Oriented Activities - Eating') 
+
+actvty_1605 <- rbind(a1, a2, a3)
+
+acl_1605 <- actvty_1605 %>%
+  select(Group,x,y,z) %>%
+  group_by(Group) %>%
+  summarise(X = mean(x, na.rm=T), Y = mean(y, na.rm=T), Z = mean(z, na.rm=T)) 
+
+
+col <- c("#472999", "#E88F00", "#10B4E2")
+
+P <- acl_1605[1:3, 1:4]
+plot2 <- scatterplot3d(P[1:3, 2:4],  pch = 16, color = col, box = FALSE, grid = FALSE, type = "h", 
+                       main="Average Accelerometer Sensor data for 18 activities obtained in September 2019",
+                       xlab = " Sensor Data X ",
+                       ylab = " Sensor Data Y",
+                       zlab = " Sensor Data Z")
+
+plot2$points3d(P[1:3, 2:4],pch = 5)
+addgrids3d(P[1:3, 2:4], grid = c("xy", "xz", "yz"))
+
+legend(2, 8, legend= c("Non-Hand Oriented Activities", "Hand Oriented Activities - General", "Hand Oriented Activities - Eating"), 
+       fill = c("#472999", "#E88F00", "#10B4E2"))
+```
+
+From both the 3D graphical representations of Smart Watch Gyro sensor data and Accelerometer Sensor data for 18 activities performed (data from 2019) , it could be concluded that :-
+
+1.  Sensor data picked up from General Hand Oriented Activities like typing, writing, folding clothes etc exhibited more precedence over milder hand oriented activities like dining and drinking.
+
+2.  This confirms to our analysis from earlier results that mild natured to sedentary activities form major part of our current lifestyle. Moderate to Intense activities ( Non-hand oriented Activities ) such as walking, jogging, etc take up only a small portion of time thereby leading to poor fitness routine.
+
+#### 5.0 ACT PHASE
+
+### 
+
+Based on the findings from the analysis, it can be understood that sedentary activities take more precedence in the day to day life. This could mean a work routine which involves sitting at an offce or at home with minimal physical activity for most part of the time. For Bellabeat , this is an opportunity to recommend :-
+
+1.  Short duration light physical exercises to women at work. This may include short brisk walks to wrist and elbow exercises and encouraging the use of staircase for staying fit.
+2.  The wellness programme could introduce a 'Home Lite' plan to encourage women to practice fairly light activities like zumba steps or light yoga during weekdays at home to account for the shortcomings in both physical fitness and mindfulness in a day.
+3.  Bellabeat's ' Leaf ' category that are completely waterproof could be an important addition to the product line to promote 24x7 wearables that are hassle free and swim friendly.
+4.  The readiness score feature of Bellabeat could be clubbed with a reward system to motivate women to follow the recommended lifestyle.
